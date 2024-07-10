@@ -4,12 +4,19 @@ import {ref, computed} from 'vue'
 // node radius
 const R = 80 / 2
 
-const a = {x:100, y:100}
-const b = {x:300, y:300}
+class Node {
+    constructor(x = 100, y = 100) {
+        this.x = x
+        this.y = y
+    }
+}
 
-const conns = ref([[a, b]])
+const a = new Node()
+const b = new Node(300, 300)
 
 const nodes = ref([a, b])
+const conns = ref([[a, b]])
+
 const dragging = ref(null)
 
 document.addEventListener("mousemove", (e) => {
@@ -23,8 +30,30 @@ document.addEventListener("mouseup", (e) => {
     dragging.value = null
 })
 
-const mousedown = (node) => {
+const onDrag = (e, node) => {
+    if (e.shiftKey) {
+        const {x, y} = node
+
+        const nNode = new Node(x, y) // shadow
+        nodes.value.push(nNode)
+        conns.value.push([node, nNode]) // shadow link
+
+        dragging.value = nNode
+
+        return 
+    }  
+    
     dragging.value = node
+}
+
+const dropOnCanvas = (e) => {
+    if (!dragging.value) return 
+
+    if (e.shiftKey) {
+        // just do nothing
+    }
+    
+    dragging.value = null
 }
 
 const nStyle = (node) => {
@@ -38,10 +67,10 @@ const nStyle = (node) => {
 </script>
 
 <template>
-    <div class="canvas">
+    <div class="canvas" @mouseup="dropOnCanvas">
         <svg xmlns="http://www.w3.org/2000/svg">
             <line v-for="([f, t]) in conns" :x1="f.x" :y1="f.y" :x2="t.x" :y2="t.y"/>
-            <circle v-for="node in nodes" :cx="node.x" :cy="node.y" :r="R" @mousedown="mousedown(node)" />
+            <circle v-for="node in nodes" :cx="node.x" :cy="node.y" :r="R" @mousedown="onDrag($event, node)" />
         </svg>
     </div>
 </template>

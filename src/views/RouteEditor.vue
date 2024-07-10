@@ -1,9 +1,15 @@
 <script setup>
 import {ref, computed} from 'vue'
 
-const n = {x:100, y:100}
+// node radius
+const R = 80 / 2
 
-const nodes = ref([n])
+const a = {x:100, y:100}
+const b = {x:300, y:300}
+
+const conns = ref([[a, b]])
+
+const nodes = ref([a, b])
 const dragging = ref(null)
 
 document.addEventListener("mousemove", (e) => {
@@ -32,25 +38,34 @@ const nStyle = (node) => {
 </script>
 
 <template>
-    <h2>Route Editor</h2>
     <div class="canvas">
-        <div class="node" :style="nStyle(node)" v-for="node in nodes" @mousedown="mousedown(node)">
-
-        </div>
+        <svg xmlns="http://www.w3.org/2000/svg">
+            <line v-for="([f, t]) in conns" :x1="f.x" :y1="f.y" :x2="t.x" :y2="t.y"/>
+            <circle v-for="node in nodes" :cx="node.x" :cy="node.y" :r="R" @mousedown="mousedown(node)" />
+        </svg>
     </div>
 </template>
 
 <style scoped>
-    .node {
-        width: 80px;
-        height: 80px;
-        border: 4px solid #333;
-        border-radius: 100%;
+    .canvas {
+        background: #f8f8f8;
+        height: 80vh;
 
-        background: #fff;
-
-        position:absolute;
-        left:100px;
-        top: 100px;
+        position: relative;
+    }
+    svg {
+        background: #f8f8f8;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+    }
+    line {
+        stroke:red; 
+        stroke-width: 4;
+    }
+    circle {
+        fill: rgba(255,255,255, .8);
+        stroke:#333; 
+        stroke-width: 4;
     }
 </style>

@@ -8,11 +8,12 @@ class Node {
     constructor(x = 100, y = 100) {
         this.x = x
         this.y = y
+        this.disabled = false
     }
 }
 
-const a = new Node()
-const b = new Node(300, 300)
+const a = new Node(100, 100)
+const b = new Node(300, 100)
 
 const nodes = ref([a, b])
 const conns = ref([[a, b]])
@@ -35,6 +36,8 @@ const onDrag = (e, node) => {
         const {x, y} = node
 
         const nNode = new Node(x, y) // shadow
+        nNode.disabled = true // just a disabled node to follow cursor
+
         nodes.value.push(nNode)
         conns.value.push([node, nNode]) // shadow link
 
@@ -50,9 +53,20 @@ const dropOnCanvas = (e) => {
     if (!dragging.value) return 
 
     if (e.shiftKey) {
-        // just do nothing
+        dragging.value.disabled = false // turn to real node
     }
     
+    dragging.value = null
+}
+
+const dropOnNode = (e, node) => {
+    if (!dragging.value) return 
+
+    if (e.shiftKey) {
+        nodes.value.pop() // drop the last created node
+        conns.value[conns.value.length - 1][1] = node // connect last node to droped node
+    }
+
     dragging.value = null
 }
 
@@ -69,8 +83,12 @@ const nStyle = (node) => {
 <template>
     <div class="canvas" @mouseup="dropOnCanvas">
         <svg xmlns="http://www.w3.org/2000/svg">
-            <line v-for="([f, t]) in conns" :x1="f.x" :y1="f.y" :x2="t.x" :y2="t.y"/>
-            <circle v-for="node in nodes" :cx="node.x" :cy="node.y" :r="R" @mousedown="onDrag($event, node)" />
+            <g>
+                <line v-for="([f, t]) in conns" :x1="f.x" :y1="f.y" :x2="t.x" :y2="t.y"/>
+                <circle v-for="node in nodes" :cx="node.x" :cy="node.y" :r="R" :class="{disabled: node.disabled}"
+                    @mousedown="onDrag($event, node)"
+                    @mouseup="dropOnNode($event, node)" />
+            </g>
         </svg>
     </div>
 </template>
@@ -82,19 +100,26 @@ const nStyle = (node) => {
 
         position: relative;
     }
+
     svg {
         background: #f8f8f8;
         position: absolute;
         width: 100%;
         height: 100%;
     }
+
     line {
         stroke:red; 
         stroke-width: 4;
     }
+
     circle {
         fill: rgba(255,255,255, .8);
         stroke:#333; 
         stroke-width: 4;
+    }
+
+    circle.disabled {
+        pointer-events: none;
     }
 </style>

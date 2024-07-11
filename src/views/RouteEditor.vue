@@ -11,6 +11,11 @@ class Node {
 
         this.name = "Node"
     }
+
+    destroy() {
+        nodes.value = nodes.value.filter(n => n !== this)
+        conns.value = conns.value.filter(c => c.f !== this && c.t !== this)
+    }
 }
 
 class Link {
@@ -18,6 +23,10 @@ class Link {
         this.f = from
         this.t = to
         this.type = type
+    }
+
+    destroy() {
+        conns.value = conns.value.filter(c => c !== this)
     }
 }
 
@@ -44,10 +53,7 @@ document.addEventListener("mouseup", (e) => {
 
 document.addEventListener("keydown", (e) => {
     if (e.key === 'Delete' && selected.value) {
-        const node = selected.value
-        nodes.value = nodes.value.filter(n => n !== node)
-
-        conns.value = conns.value.filter(c => c.f !== node && c.t !== node)
+        selected.value.destroy()
     }
 })
 

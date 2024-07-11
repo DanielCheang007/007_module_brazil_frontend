@@ -90,56 +90,79 @@ const dropOnNode = (e, node) => {
     dragging.value = null
 }
 
-const nStyle = (node) => {
-    const {x, y} = node
-    return {
-        left: `${x}px`,
-        top: `${y}px`
+// const nStyle = (node) => {
+//     const {x, y} = node
+//     return {
+//         left: `${x}px`,
+//         top: `${y}px`
+//     }
+// }
+
+const switchDirection = () => {
+    if (selected.value && selected.value instanceof Link) {
+        const {f, t} = selected.value
+        selected.value.f = t
+        selected.value.t = f
     }
 }
 
 </script>
 
 <template>
-    <div class="canvas" @mouseup="dropOnCanvas">
-        <svg xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <marker
-                id="arrow"
-                viewBox="0 0 10 10"
-                refX="0"
-                refY="5"
-                markerWidth="20"
-                markerHeight="20"
-                markerUnits="userSpaceOnUse"
-                orient="auto">
-                    <path d="M 0 0 L 10 5 L 0 10 z" />
-                </marker>
-            </defs>
-    
-            <g>
-                <line 
-                    v-for="({f, t}) in conns" 
-                    :x1="f.x" :y1="f.y" :x2="t.x" :y2="t.y" 
-                    marker-end="url(#arrow)"/>
+    <div style="display:flex;">
+        <main class="canvas" @mouseup="dropOnCanvas">
+            <svg xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <marker
+                    id="arrow"
+                    viewBox="0 0 10 10"
+                    refX="0"
+                    refY="5"
+                    markerWidth="20"
+                    markerHeight="20"
+                    markerUnits="userSpaceOnUse"
+                    orient="auto">
+                        <path d="M 0 0 L 10 5 L 0 10 z" />
+                    </marker>
+                </defs>
+        
+                <g>
+                    <line 
+                        v-for="link in conns" 
+                        :x1="link.f.x" :y1="link.f.y" :x2="link.t.x" :y2="link.t.y" 
+                        :class="{selected: link === selected}"
+                        marker-end="url(#arrow)"
+                        @mousedown="selected = link"
+                        @mouseup.stop />
 
-                <circle 
-                    v-for="node in nodes" :cx="node.x" :cy="node.y" :r="R" 
-                    :class="{disabled: node.disabled, selected: node === selected}"
-                    @mousedown="onDragNode($event, node)"
-                    @mouseup.stop="dropOnNode($event, node)" />
+                    <circle 
+                        v-for="node in nodes" :cx="node.x" :cy="node.y" :r="R" 
+                        :class="{selected: node === selected}"
+                        @mousedown="onDragNode($event, node)"
+                        @mouseup.stop="dropOnNode($event, node)" />
 
-                <template v-if="dragging?.placeholder">
-                    <line :x1="dragging.from.x" :y1="dragging.from.y" :x2="dragging.x" :y2="dragging.y" 
-                        marker-end="url(#arrow)"/>
-                    <circle class="disabled" :cx="dragging.x" :cy="dragging.y" :r="R" />
-                </template>
-                
-                <text v-for="node in nodes" :x="node.x" :y="node.y + R + 20">
-                    {{ node.name }}
-                </text>
-            </g>
-        </svg>
+                    <template v-if="dragging?.placeholder">
+                        <line :x1="dragging.from.x" :y1="dragging.from.y" :x2="dragging.x" :y2="dragging.y" 
+                            marker-end="url(#arrow)"/>
+                        <circle class="disabled" :cx="dragging.x" :cy="dragging.y" :r="R" />
+                    </template>
+                    
+                    <text v-for="node in nodes" :x="node.x" :y="node.y + R + 20">
+                        {{ node.name }}
+                    </text>
+                </g>
+            </svg>
+        </main>
+        <aside>
+            <form v-if="selected" @submit.prevent>
+                <label>
+                    Name <br>
+                    <input type="text" v-model="selected.name"/>
+                </label>
+            </form>
+
+            <button @click.prevent="switchDirection">Switch Direction</button>
+        </aside>
     </div>
 </template>
 
@@ -149,6 +172,12 @@ const nStyle = (node) => {
         height: 80vh;
 
         position: relative;
+        flex: 1;
+    }
+
+    aside {
+        flex: 0 0 30%;
+        padding: 1rem;
     }
 
     svg {
@@ -159,8 +188,11 @@ const nStyle = (node) => {
     }
 
     line {
-        stroke:red; 
         stroke-width: 4;
+        stroke: #ccc;
+    }
+    line.selected {
+        stroke: green;
     }
 
     circle {

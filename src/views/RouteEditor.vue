@@ -96,14 +96,6 @@ const dropOnNode = (e, node) => {
     dragging.value = null
 }
 
-// const nStyle = (node) => {
-//     const {x, y} = node
-//     return {
-//         left: `${x}px`,
-//         top: `${y}px`
-//     }
-// }
-
 const switchDirection = () => {
     if (selected.value && selected.value instanceof Link) {
         const {f, t} = selected.value
@@ -112,11 +104,29 @@ const switchDirection = () => {
     }
 }
 
+const canvasOffset = ref({
+    x: 0,
+    y: 0
+})
+
+const draggingCanvas = ref(false)
+
+document.addEventListener("mousemove", (e) => {
+    if (!draggingCanvas.value) return 
+
+    canvasOffset.value.x += e.movementX
+    canvasOffset.value.y += e.movementY
+})
+
+document.addEventListener("mouseup", (e) => {
+    draggingCanvas.value = null
+})
+
 </script>
 
 <template>
     <div style="display:flex;">
-        <main class="canvas" @mouseup="dropOnCanvas">
+        <main class="canvas" @mouseup="dropOnCanvas" @mousedown.shift="draggingCanvas = true">
             <svg xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <marker
@@ -132,19 +142,19 @@ const switchDirection = () => {
                     </marker>
                 </defs>
         
-                <g>
+                <g :transform="`translate(${canvasOffset.x} ${canvasOffset.y})`">
                     <line 
                         v-for="link in conns" 
                         :x1="link.f.x" :y1="link.f.y" :x2="link.t.x" :y2="link.t.y" 
                         :class="{selected: link === selected}"
                         marker-end="url(#arrow)"
-                        @mousedown="selected = link"
+                        @mousedown.stop="selected = link"
                         @mouseup.stop />
 
                     <circle 
                         v-for="node in nodes" :cx="node.x" :cy="node.y" :r="R" 
                         :class="{selected: node === selected}"
-                        @mousedown="onDragNode($event, node)"
+                        @mousedown.stop="onDragNode($event, node)"
                         @mouseup.stop="dropOnNode($event, node)" />
 
                     <template v-if="dragging?.placeholder">

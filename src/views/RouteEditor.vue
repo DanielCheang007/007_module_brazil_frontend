@@ -1,41 +1,56 @@
 <script setup>
-import {ref, computed} from 'vue'
+import {ref, watch, computed} from 'vue'
 
 // node radius
 const R = 80 / 2
 
+const CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890"
+const randomId = len => {
+    return [...Array(len)].map(() => CHARS[Math.floor(Math.random() * CHARS.length)]).join("")
+}
+
+
 class Node {
-    constructor(x = 100, y = 100) {
+    constructor({id = randomId(8), x = 100, y = 100, name = "Node"} = {}) {
+        this.id = id
         this.x = x
         this.y = y
 
-        this.name = "Node"
+        this.name = name
     }
 
     destroy() {
         nodes.value = nodes.value.filter(n => n !== this)
-        conns.value = conns.value.filter(c => c.f !== this && c.t !== this)
+        links.value = links.value.filter(c => c.f !== this && c.t !== this)
     }
 }
 
 class Link {
-    constructor(from, to, type = false) {
+    constructor({from, to, type = false} = {}) {
         this.f = from
         this.t = to
         this.type = type
     }
 
     destroy() {
-        conns.value = conns.value.filter(c => c !== this)
+        links.value = links.value.filter(c => c !== this)
+    }
+
+    // export the node id only
+    toJSON() {
+        const {f, t, type} = this
+        return {
+            fid: f.id,
+            tid: t.id,
+            type
+        }
     }
 }
 
-const a = new Node(100, 100)
-const b = new Node(300, 100)
-const link = new Link(a, b)
 
-const nodes = ref([a, b])
-const conns = ref([link])
+
+const nodes = ref([])
+const links = ref([])
 
 const dragging = ref(null)
 const selected = ref(null)
@@ -77,9 +92,9 @@ const dropOnCanvas = (e) => {
 
     if (e.shiftKey) {
         const {x, y, from} = dragging.value
-        const nNode = new Node(x, y)
+        const nNode = new Node({x, y})
         nodes.value.push(nNode)
-        conns.value.push(new Link(from, nNode))
+        links.value.push(new Link({from, to: nNode}))
     }
     
     dragging.value = null
@@ -90,7 +105,7 @@ const dropOnNode = (e, node) => {
 
     if (e.shiftKey) {
         const {from} = dragging.value
-        conns.value.push(new Link(from, node))
+        links.value.push(new Link({from, to: node}))
     }
 
     dragging.value = null
@@ -122,6 +137,46 @@ document.addEventListener("mouseup", (e) => {
     draggingCanvas.value = null
 })
 
+
+
+// ---- store status
+
+const save = () => {
+    localStorage.setItem("data", JSON.stringify({
+        nodes: nodes.value,
+        links: links.value
+    }))
+}
+
+const load = () => {
+    const dataStr = localStorage.getItem("data")
+    if (typeof dataStr === "string") {
+        const {nodes: ns, links: ls} = JSON.parse(dataStr)
+
+        // load nodes
+        nodes.value = ns.map(n => new Node(n))
+
+        // load links
+        links.value = ls.map(({fid, tid, type}) => {
+            const from = nodes.value.find(n => n.id === fid)
+            const to = nodes.value.find(n => n.id === tid)
+            return new Link({from, to, type})
+        })
+
+    } else {
+        const a = new Node({x: 100, y: 100})
+        const b = new Node({x: 400, y: 150})
+        const link = new Link({from: a, to: b})
+        
+        nodes.value = [a, b]
+        links.value = [link]
+    }
+}
+
+watch(() => [nodes, links], save, {deep: true})
+load()
+
+
 </script>
 
 <template>
@@ -144,7 +199,7 @@ document.addEventListener("mouseup", (e) => {
         
                 <g :transform="`translate(${canvasOffset.x} ${canvasOffset.y})`">
                     <line 
-                        v-for="link in conns" 
+                        v-for="link in links" 
                         :x1="link.f.x" :y1="link.f.y" :x2="link.t.x" :y2="link.t.y" 
                         :class="{selected: link === selected}"
                         marker-end="url(#arrow)"
@@ -156,16 +211,17 @@ document.addEventListener("mouseup", (e) => {
                         :class="{selected: node === selected}"
                         @mousedown.stop="onDragNode($event, node)"
                         @mouseup.stop="dropOnNode($event, node)" />
+                    
+                    <text v-for="node in nodes" :x="node.x" :y="node.y + R + 20">
+                        {{ node.name }}
+                    </text>
 
+                    <!-- shift drag -->
                     <template v-if="dragging?.placeholder">
                         <line :x1="dragging.from.x" :y1="dragging.from.y" :x2="dragging.x" :y2="dragging.y" 
                             marker-end="url(#arrow)"/>
                         <circle class="disabled" :cx="dragging.x" :cy="dragging.y" :r="R" />
                     </template>
-                    
-                    <text v-for="node in nodes" :x="node.x" :y="node.y + R + 20">
-                        {{ node.name }}
-                    </text>
                 </g>
             </svg>
         </main>

@@ -43,10 +43,11 @@ class Link {
 
   // export the node id only
   toJSON() {
-    const { f, t, type } = this;
+    const { f, t, name, type } = this;
     return {
       fid: f.id,
       tid: t.id,
+      name,
       type,
     };
   }
@@ -159,10 +160,10 @@ const load = () => {
     nodes.value = ns.map((n) => new Node(n));
 
     // load links
-    links.value = ls.map(({ fid, tid, type }) => {
+    links.value = ls.map(({ fid, tid, ...rest }) => {
       const from = nodes.value.find((n) => n.id === fid);
       const to = nodes.value.find((n) => n.id === tid);
-      return new Link({ from, to, type });
+      return new Link({ from, to, ...rest });
     });
   } else {
     const a = new Node({ x: 100, y: 100 });
@@ -212,7 +213,7 @@ load();
             @mouseup.stop="dropOnNode($event, node)"
           />
 
-          <text v-for="node in nodes" :x="node.x" :y="node.y + R + 20">
+          <text v-for="node in nodes" :x="node.x" :y="node.y" :dy="R + 20">
             {{ node.name }}
           </text>
 

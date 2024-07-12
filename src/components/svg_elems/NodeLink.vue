@@ -19,6 +19,15 @@ const linePath = computed(() => {
   const { f, t } = props.link;
   return `M${f.x} ${f.y}, L${t.x} ${t.y}`;
 });
+
+const caption = computed(() => {
+  const { f, t, name } = props.link;
+  const lineLen = Math.sqrt(Math.pow(f.x - t.x, 2) + Math.pow(f.y - t.y, 2));
+  const textLen = Math.floor(lineLen / 20);
+  if (name) {
+    return `${name.slice(0, textLen)}${name.length > textLen ? "..." : ""}`;
+  }
+});
 </script>
 
 <template>
@@ -42,7 +51,7 @@ const linePath = computed(() => {
     <path :id="`p${uid}`" :d="linePath" />
     <text dy="-10">
       <textPath :href="`#p${uid}`" startOffset="50%" text-anchor="middle">
-        {{ link?.name }}
+        {{ caption }}
       </textPath>
     </text>
   </g>

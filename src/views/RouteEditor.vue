@@ -1,6 +1,9 @@
 <script setup>
 import { ref, watch, computed } from "vue";
 
+import ArrowMarker from "@/components/svg_elems/ArrowMarker.vue";
+import NodeLink from "@/components/svg_elems/NodeLink.vue";
+
 // node radius
 const R = 80 / 2;
 
@@ -136,7 +139,6 @@ document.addEventListener("mouseup", (e) => {
 });
 
 // ---- store status
-
 const save = () => {
   localStorage.setItem(
     "data",
@@ -184,35 +186,23 @@ load();
     >
       <svg xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <marker
-            id="arrow"
-            viewBox="0 0 10 10"
-            refX="0"
-            refY="5"
-            markerWidth="20"
-            markerHeight="20"
-            markerUnits="userSpaceOnUse"
-            orient="auto"
-          >
-            <path d="M 0 0 L 10 5 L 0 10 z" />
-          </marker>
+          <ArrowMarker id="arrow"></ArrowMarker>
+          <ArrowMarker id="arrow-active"></ArrowMarker>
         </defs>
 
         <g :transform="`translate(${canvasOffset.x} ${canvasOffset.y})`">
-          <line
-            v-for="link in links"
-            :x1="link.f.x"
-            :y1="link.f.y"
-            :x2="link.t.x"
-            :y2="link.t.y"
+          <NodeLink
+            v-for="(link, i) in links"
+            :link="link"
+            :R="R"
             :class="{ selected: link === selected }"
-            marker-end="url(#arrow)"
             @mousedown.stop="selected = link"
             @mouseup.stop
-          />
+          ></NodeLink>
 
           <circle
             v-for="node in nodes"
+            class="node"
             :cx="node.x"
             :cy="node.y"
             :r="R"
@@ -226,16 +216,14 @@ load();
           </text>
 
           <!-- shift drag -->
-          <template v-if="dragging?.placeholder">
-            <line
-              :x1="dragging.from.x"
-              :y1="dragging.from.y"
-              :x2="dragging.x"
-              :y2="dragging.y"
-              marker-end="url(#arrow)"
-            />
+          <g v-if="dragging?.placeholder" class="pointer-none">
+            <NodeLink
+              :link="{ f: dragging.from, t: dragging }"
+              :R="R"
+            ></NodeLink>
+
             <circle class="disabled" :cx="dragging.x" :cy="dragging.y" :r="R" />
-          </template>
+          </g>
         </g>
       </svg>
     </main>
@@ -254,11 +242,15 @@ load();
 
 <style scoped>
 .canvas {
+  --line-color: #ccc;
+  --line-active-color: green;
   background: #f8f8f8;
   height: 80vh;
 
   position: relative;
   flex: 1;
+
+  user-select: none;
 }
 
 aside {
@@ -273,30 +265,40 @@ svg {
   height: 100%;
 }
 
-line {
-  stroke-width: 4;
-  stroke: #ccc;
+marker#arrow {
+  fill: var(--line-color);
 }
-line.selected {
-  stroke: green;
+marker#arrow-active {
+  fill: var(--line-active-color);
 }
 
-circle {
+:deep(.selected .link) {
+  stroke: var(--line-active-color);
+}
+:deep(.selected .arrow-marker) {
+  marker-end: url(#arrow-active);
+}
+
+circle.node {
   fill: rgba(255, 255, 255, 0.8);
   stroke: #333;
   stroke-width: 4;
 }
 
-circle.disabled {
+circle.node.disabled {
   pointer-events: none;
   stroke: #ccc;
 }
 
-circle.selected {
+circle.node.selected {
   stroke: green;
 }
 
 text {
   text-anchor: middle;
+}
+
+.pointer-none {
+  pointer-events: none;
 }
 </style>

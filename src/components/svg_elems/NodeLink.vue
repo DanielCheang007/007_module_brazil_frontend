@@ -14,6 +14,11 @@ const linePos = computed(() => {
     y2: t.y,
   };
 });
+
+const linePath = computed(() => {
+  const { f, t } = props.link;
+  return `M${f.x} ${f.y}, L${t.x} ${t.y}`;
+});
 </script>
 
 <template>
@@ -33,6 +38,13 @@ const linePos = computed(() => {
 
     <!-- for arrow mark, the mask will affect this arrow, so separate it -->
     <line v-bind="linePos" class="arrow-marker pointer-none" />
+
+    <path :id="`p${uid}`" :d="linePath" />
+    <text dy="-10">
+      <textPath :href="`#p${uid}`" startOffset="50%" text-anchor="middle">
+        {{ link?.name }}
+      </textPath>
+    </text>
   </g>
 </template>
 

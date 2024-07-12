@@ -30,9 +30,10 @@ class Node {
 }
 
 class Link {
-  constructor({ from, to, type = false } = {}) {
+  constructor({ from, to, name = "Caption", type = false } = {}) {
     this.f = from;
     this.t = to;
+    this.name = name;
     this.type = type;
   }
 

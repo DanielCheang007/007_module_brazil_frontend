@@ -143,7 +143,7 @@ draggable(draggingCanvas);
       <form v-if="selected" @submit.prevent>
         <label>
           Name <br />
-          <input type="text" v-model="selected.name" />
+          <input type="text" v-model="selected.name" autofocus="true" />
         </label>
       </form>
 

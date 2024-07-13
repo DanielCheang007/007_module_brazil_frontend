@@ -1,6 +1,8 @@
 <script setup>
 import { ref, watch, computed } from "vue";
 
+import draggable from "@/utils/draggable.js";
+
 import ArrowMarker from "@/components/svg_elems/ArrowMarker.vue";
 import NodeLink from "@/components/svg_elems/NodeLink.vue";
 
@@ -59,16 +61,7 @@ const links = ref([]);
 const dragging = ref(null);
 const selected = ref(null);
 
-document.addEventListener("mousemove", (e) => {
-  if (!dragging.value) return;
-
-  dragging.value.x += e.movementX;
-  dragging.value.y += e.movementY;
-});
-
-document.addEventListener("mouseup", (e) => {
-  dragging.value = null;
-});
+draggable(dragging);
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Delete" && selected.value) {
@@ -128,17 +121,7 @@ const canvasOffset = ref({
 });
 
 const draggingCanvas = ref(false);
-
-document.addEventListener("mousemove", (e) => {
-  if (!draggingCanvas.value) return;
-
-  canvasOffset.value.x += e.movementX;
-  canvasOffset.value.y += e.movementY;
-});
-
-document.addEventListener("mouseup", (e) => {
-  draggingCanvas.value = null;
-});
+draggable(draggingCanvas);
 
 // ---- store status
 const save = () => {
@@ -184,7 +167,7 @@ load();
     <main
       class="canvas"
       @mouseup="dropOnCanvas"
-      @mousedown.shift="draggingCanvas = true"
+      @mousedown.shift="draggingCanvas = canvasOffset"
     >
       <svg xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -199,7 +182,6 @@ load();
             :R="R"
             :class="{ selected: link === selected }"
             @mousedown.stop="selected = link"
-            @mouseup.stop
           ></NodeLink>
 
           <circle

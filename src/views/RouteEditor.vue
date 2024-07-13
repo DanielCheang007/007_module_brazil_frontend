@@ -1,59 +1,16 @@
 <script setup>
-import { ref, watch, computed } from "vue";
+import { ref, watch, computed, onUnmounted } from "vue";
 
 import draggable from "@/utils/draggable.js";
+
+import Node from "@/models/node.js";
+import Link from "@/models/link.js";
 
 import ArrowMarker from "@/components/svg_elems/ArrowMarker.vue";
 import NodeLink from "@/components/svg_elems/NodeLink.vue";
 
 // node radius
 const R = 80 / 2;
-
-const CHARS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890";
-const randomId = (len) => {
-  return [...Array(len)]
-    .map(() => CHARS[Math.floor(Math.random() * CHARS.length)])
-    .join("");
-};
-
-class Node {
-  constructor({ id = randomId(8), x = 100, y = 100, name = "Node" } = {}) {
-    this.id = id;
-    this.x = x;
-    this.y = y;
-
-    this.name = name;
-  }
-
-  destroy() {
-    nodes.value = nodes.value.filter((n) => n !== this);
-    links.value = links.value.filter((c) => c.f !== this && c.t !== this);
-  }
-}
-
-class Link {
-  constructor({ from, to, name = "Caption", type = false } = {}) {
-    this.f = from;
-    this.t = to;
-    this.name = name;
-    this.type = type;
-  }
-
-  destroy() {
-    links.value = links.value.filter((c) => c !== this);
-  }
-
-  // export the node id only
-  toJSON() {
-    const { f, t, name, type } = this;
-    return {
-      fid: f.id,
-      tid: t.id,
-      name,
-      type,
-    };
-  }
-}
 
 const nodes = ref([]);
 const links = ref([]);
@@ -63,12 +20,19 @@ const selected = ref(null);
 
 draggable(dragging);
 
-document.addEventListener("keydown", (e) => {
+// ---- delete selected node or link
+const deleteSelection = (e) => {
   if (e.key === "Delete" && selected.value) {
-    selected.value.destroy();
+    selected.value.destroy(nodes, links);
   }
+};
+
+document.addEventListener("keydown", deleteSelection);
+onUnmounted(() => {
+  document.removeEventListener("keydown", deleteSelection);
 });
 
+// ---- dragging a node
 const onDragNode = (e, node) => {
   selected.value = node;
 
@@ -107,6 +71,7 @@ const dropOnNode = (e, node) => {
   dragging.value = null;
 };
 
+// ---- switch link direction
 const switchDirection = () => {
   if (selected.value && selected.value instanceof Link) {
     const { f, t } = selected.value;
@@ -115,6 +80,7 @@ const switchDirection = () => {
   }
 };
 
+// ---- draggable canvas
 const canvasOffset = ref({
   x: 0,
   y: 0,
@@ -122,7 +88,6 @@ const canvasOffset = ref({
 
 const draggingCanvas = ref(false);
 draggable(draggingCanvas);
-console.log("-- attaching event to doc");
 
 // ---- store status
 const save = () => {

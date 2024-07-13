@@ -182,6 +182,7 @@ load();
             :R="R"
             :class="{ selected: link === selected }"
             @mousedown.stop="selected = link"
+            @mouseup.stop
           ></NodeLink>
 
           <circle

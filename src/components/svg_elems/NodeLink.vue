@@ -16,7 +16,11 @@ const linePos = computed(() => {
 });
 
 const linePath = computed(() => {
-  const { f, t } = props.link;
+  let { f, t } = props.link;
+
+  // switch start and end to keep text direction
+  if (f.x > t.x) [f, t] = [t, f];
+
   return `M${f.x} ${f.y}, L${t.x} ${t.y}`;
 });
 

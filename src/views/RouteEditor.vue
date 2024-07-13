@@ -122,6 +122,7 @@ const canvasOffset = ref({
 
 const draggingCanvas = ref(false);
 draggable(draggingCanvas);
+console.log("-- attaching event to doc");
 
 // ---- store status
 const save = () => {

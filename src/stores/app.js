@@ -32,16 +32,24 @@ const load = () => {
       return new Link({ from, to, ...rest });
     });
   } else {
-    const a = new Node({ x: 100, y: 100 });
-    const b = new Node({ x: 400, y: 150 });
-    const link = new Link({ from: a, to: b });
-
-    nodes.value = [a, b];
-    links.value = [link];
+    clearAll();
   }
 };
 
 watch(() => [nodes, links], save, { deep: true });
 load();
 
-export { nodes, links };
+// ---- clearAll
+const clearAll = () => {
+  nodes.value = [];
+  links.value = [];
+
+  const a = new Node({ x: 100, y: 100, isStart: true });
+  const b = new Node({ x: 400, y: 150, isFinal: true });
+  const link = new Link({ from: a, to: b });
+
+  nodes.value = [a, b];
+  links.value = [link];
+};
+
+export { nodes, links, clearAll };

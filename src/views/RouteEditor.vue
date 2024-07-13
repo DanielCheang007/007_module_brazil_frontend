@@ -6,7 +6,7 @@ import draggable from "@/utils/draggable.js";
 import Node from "@/models/node.js";
 import Link from "@/models/link.js";
 
-import { nodes, links } from "@/stores/app.js";
+import { nodes, links, clearAll } from "@/stores/app.js";
 
 import ArrowMarker from "@/components/svg_elems/ArrowMarker.vue";
 import NodeLink from "@/components/svg_elems/NodeLink.vue";
@@ -90,65 +90,77 @@ draggable(draggingCanvas);
 </script>
 
 <template>
-  <div style="display: flex">
-    <main
-      class="canvas"
-      @mouseup="dropOnCanvas"
-      @mousedown.shift="draggingCanvas = canvasOffset"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <ArrowMarker id="arrow"></ArrowMarker>
-          <ArrowMarker id="arrow-active"></ArrowMarker>
-        </defs>
+  <div>
+    <h2>Question Editor</h2>
+    <div class="toolbar">
+      <button @click="clearAll">Clear</button>
+    </div>
 
-        <g :transform="`translate(${canvasOffset.x} ${canvasOffset.y})`">
-          <NodeLink
-            v-for="(link, i) in links"
-            :link="link"
-            :R="R"
-            :class="{ selected: link === selected }"
-            @mousedown.stop="selected = link"
-            @mouseup.stop
-          ></NodeLink>
+    <div style="display: flex">
+      <main
+        class="canvas"
+        @mouseup="dropOnCanvas"
+        @mousedown.shift="draggingCanvas = canvasOffset"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <ArrowMarker id="arrow"></ArrowMarker>
+            <ArrowMarker id="arrow-active"></ArrowMarker>
+          </defs>
 
-          <circle
-            v-for="node in nodes"
-            class="node"
-            :cx="node.x"
-            :cy="node.y"
-            :r="R"
-            :class="{ selected: node === selected }"
-            @mousedown.stop="onDragNode($event, node)"
-            @mouseup.stop="dropOnNode($event, node)"
-          />
-
-          <text v-for="node in nodes" :x="node.x" :y="node.y" :dy="R + 20">
-            {{ node.name }}
-          </text>
-
-          <!-- shift drag -->
-          <g v-if="dragging?.placeholder" class="pointer-none">
+          <g :transform="`translate(${canvasOffset.x} ${canvasOffset.y})`">
             <NodeLink
-              :link="{ f: dragging.from, t: dragging }"
+              v-for="(link, i) in links"
+              :link="link"
               :R="R"
+              :class="{ selected: link === selected }"
+              @mousedown.stop="selected = link"
+              @mouseup.stop
             ></NodeLink>
 
-            <circle class="disabled" :cx="dragging.x" :cy="dragging.y" :r="R" />
-          </g>
-        </g>
-      </svg>
-    </main>
-    <aside>
-      <form v-if="selected" @submit.prevent>
-        <label>
-          Name <br />
-          <input type="text" v-model="selected.name" autofocus="true" />
-        </label>
-      </form>
+            <circle
+              v-for="node in nodes"
+              class="node"
+              :cx="node.x"
+              :cy="node.y"
+              :r="R"
+              :class="{ selected: node === selected }"
+              @mousedown.stop="onDragNode($event, node)"
+              @mouseup.stop="dropOnNode($event, node)"
+            />
 
-      <button @click.prevent="switchDirection">Switch Direction</button>
-    </aside>
+            <text v-for="node in nodes" :x="node.x" :y="node.y" :dy="R + 20">
+              {{ node.name }}
+            </text>
+
+            <!-- shift drag -->
+            <g v-if="dragging?.placeholder" class="pointer-none">
+              <NodeLink
+                :link="{ f: dragging.from, t: dragging }"
+                :R="R"
+              ></NodeLink>
+
+              <circle
+                class="disabled"
+                :cx="dragging.x"
+                :cy="dragging.y"
+                :r="R"
+              />
+            </g>
+          </g>
+        </svg>
+      </main>
+      <aside>
+        <form v-if="selected" @submit.prevent>
+          <label>
+            Name <br />
+            <input type="text" v-model="selected.name" autofocus="true" />
+          </label>
+        </form>
+
+        <button @click.prevent="switchDirection">Switch Direction</button>
+      </aside>
+    </div>
   </div>
 </template>
 
